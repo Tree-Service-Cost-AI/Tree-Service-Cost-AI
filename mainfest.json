@@ -1,5 +1,3 @@
-`manifest.json`
-```json
 {
     "name": "Tree Measurement App",
     "short_name": "TreeMeasure",
