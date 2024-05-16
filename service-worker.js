@@ -1,5 +1,4 @@
-service-worker.js`
-```js
+service-worker.js
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open('v1').then(function(cache) {
