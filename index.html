@@ -11,6 +11,7 @@
     <script src="https://docs.opencv.org/4.5.3/opencv.js"></script>
 </head>
 <body>
+    <div id="app-header">Tree Measurement App</div>
     <a-scene embedded arjs>
         <a-marker preset="hiro">
             <a-box position="0 0.5 0" material="color: yellow;"></a-box>
@@ -18,7 +19,10 @@
         <a-entity camera></a-entity>
     </a-scene>
 
+    <button id="capture-button">Capture Image</button>
+    <button id="process-button">Process Images</button>
+    <canvas id="outputCanvas" style="display:none;"></canvas>
+
     <script src="script.js"></script>
 </body>
 </html>
-
