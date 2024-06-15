@@ -1,82 +1,56 @@
-window.addEventListener('load', () => {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(registration => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            }).catch(error => {
-                console.log('ServiceWorker registration failed: ', error);
-            });
+let currentStep = 1;
+
+function showStep(step) {
+    document.querySelectorAll('.step').forEach(stepElement => {
+        stepElement.style.display = 'none';
+    });
+    const currentStepElement = document.getElementById(`step-${step}`);
+    currentStepElement.style.display = 'block';
+    
+    // Automatically focus on the first input field or select element in the current step
+    const inputField = currentStepElement.querySelector('input, select');
+    if (inputField) {
+        inputField.focus();
     }
+}
 
-    let capturedImages = [];
+function nextStep(step) {
+    currentStep = step + 1;
+    showStep(currentStep);
+}
 
-    // Add event listener for capture button
-    document.getElementById('capture-button').addEventListener('click', () => {
-        let video = document.querySelector('video'); // AR.js uses a video element
-        let canvas = document.createElement('canvas');
-        let context = canvas.getContext('2d');
-        captureImage(video, context, canvas, capturedImages);
-    });
+function prevStep(step) {
+    currentStep = step - 1;
+    showStep(currentStep);
+}
 
-    // Add event listener for process button
-    document.getElementById('process-button').addEventListener('click', () => {
-        processImages(capturedImages);
-    });
+function calculateEstimate() {
+    const height = parseFloat(document.getElementById('height').value);
+    const radius1 = parseFloat(document.getElementById('radius1').value);
+    const radius2 = parseFloat(document.getElementById('radius2').value);
+    const canopyHeight = parseFloat(document.getElementById('canopyHeight').value);
+    const density = parseInt(document.getElementById('density').value);
+    const trimLevel = parseInt(document.getElementById('trimLevel').value);
 
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-        console.log('AR.js ready');
-        initializeOpenCV();
-    });
-});
+    // BasicTrim Calculation
+    const basicTrim = (height * 3) + (radius1 * 1.5) + (radius2 * 1.5) + (canopyHeight * 2);
 
-function initializeOpenCV() {
-    cv['onRuntimeInitialized'] = () => {
-        console.log('OpenCV.js is ready');
+    // Trim Level and Density Multipliers
+    const multipliers = {
+        1: {1: 1.1, 2: 1.2, 3: 1.7, 4: 4.3},
+        2: {1: 1.4, 2: 1.6, 3: 2.2, 4: 5.1},
+        3: {1: 1.7, 2: 2.0, 3: 2.8, 4: 6.2},
+        4: {1: 2.0, 2: 2.4, 3: 3.4, 4: 7.2}
     };
+
+    const multiplier = multipliers[density][trimLevel];
+    const cost = basicTrim * multiplier;
+
+    document.getElementById('result').innerText = `Estimated Cost: $${cost.toFixed(2)}`;
+    document.getElementById('downloadButton').style.display = 'block'; // Show the download button
 }
 
-function captureImage(video, context, canvas, capturedImages) {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    capturedImages.push(imageData);
-    console.log('Image captured');
-}
-
-function processImages(images) {
-    if (images.length < 2) {
-        console.error('Need more images for photogrammetry');
-        return;
-    }
-
-    images.forEach(imageData => {
-        let src = cv.matFromImageData(imageData);
-        let gray = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-
-        // Detect keypoints
-        let orb = new cv.ORB();
-        let keypoints = new cv.KeyPointVector();
-        orb.detect(gray, keypoints);
-
-        // Display keypoints on canvas
-        let out = new cv.Mat();
-        cv.drawKeypoints(gray, keypoints, out);
-        cv.imshow('outputCanvas', out);
-
-        // Cleanup
-        src.delete();
-        gray.delete();
-        out.delete();
-        keypoints.delete();
-        orb.delete();
-    });
-
-    calculateMeasurements(images);
-}
-
-function calculateMeasurements(images) {
-    console.log('Calculating measurements...');
-    // Implement photogrammetry algorithms to calculate tree height, radius, and canopy height
-}
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const height = document.getElementById('height').value;
+    const radius1 = document.getElementById('radius1').
